@@ -34,6 +34,14 @@ const std::array<uint8_t,32*64> Chip8::getVideoBuffer() const{
     return video;
 }
 
+uint8_t Chip8::getxRegister(const uint16_t block) const{
+    return static_cast<uint8_t>((block & 0x0F00) >> 8);
+}
+
+uint8_t Chip8::getyRegister(const uint16_t block) const{
+    return static_cast<uint8_t>((block & 0x00F0) >> 4);
+}
+
 void Chip8::nextInstruction(){
     opcode = (memmory[PC]<<8) | memmory[PC+1];
     PC+=2;
@@ -65,42 +73,87 @@ void Chip8::CALLadr(){
     PC = opcode & (0x0FFF);
 }
 void Chip8::SEVxByte(){
-    if(registers[(opcode & 0x0F00)>>8] == (opcode & 0x00FF)){
+    uint8_t x = getxRegister(opcode);
+    if(registers[x] == (opcode & 0x00FF)){
         PC += 2;
     }
 }
 
 void Chip8::SNEVxByte(){
-    if(registers[(opcode & 0x0F00)>>8] != opcode & 0x00FF){
+    uint8_t x = getxRegister(opcode);
+    if(registers[x] != (opcode & 0x00FF)){
         PC += 2;
     }
 }
 
 void Chip8::SEVxVy(){
-    if(registers[(opcode & 0xF00)>>8] == registers[(opcode & 0x00F0)>>4]){
+    uint8_t x = getxRegister(opcode);
+    uint8_t y = getyRegister(opcode);
+    if(registers[x] == registers[y]){
         PC += 2;
     }
 }
 
 void Chip8::LDVxByte(){
-    registers[(opcode & 0x0F00)>>8] = opcode & 0x00FF;
+    registers[getxRegister(opcode)] = opcode & 0x00FF;
 }
 void Chip8::ADDVxByte(){
-    registers[(opcode & 0x0F00)>>8] += (opcode & 0x00FF);
+    registers[getxRegister(opcode)] += (opcode & 0x00FF);
 }
 void Chip8::LDVxVy(){
-    registers[(opcode & 0x0F00)>>8] = registers[(opcode & 0x00F0)>>4];
+    registers[getxRegister(opcode)] = registers[getyRegister(opcode)];
 }
 void Chip8::ORVxVy(){
-    registers[(opcode & 0x0F00)>>8] |= registers[(opcode & 0x00F0)>>4];
+    registers[getxRegister(opcode)] |= registers[getyRegister(opcode)];
 }
 void Chip8::ANDVxVy(){
-    registers[(opcode & 0x0F00)>>8] &= registers[(opcode & 0x00F0)>>4];
+    registers[getxRegister(opcode)] &= registers[getyRegister(opcode)];
 }
 void Chip8::XORVxVy(){
-    registers[(opcode & 0x0F00)>>8] ^= registers[(opcode & 0x00F0)>>4];
+    registers[getxRegister(opcode)] ^= registers[getyRegister(opcode)];
 }
 void Chip8::ADDVxVy(){
-    registers[(opcode & 0x0F00)>>8] += registers[(opcode & 0x00F0)>>4];
-    registers[0xF] = (registers[(opcode & 0x0F00)>>8] < registers[(opcode & 0x00F0)>>4]);
+    uint8_t x = getxRegister(opcode);
+    uint8_t y = getyRegister(opcode);
+    registers[x] += registers[y];
+    registers[0xF] = (registers[x] < registers[y]);
+}void Chip8::SUBVxVy(){
+    uint8_t x = getxRegister(opcode);
+    uint8_t y = getyRegister(opcode);
+    bool borrow = (registers[x] >= registers[y])? 1 : 0;
+    registers[x] -= registers[y];
+    registers[0xF] = static_cast<uint8_t>(borrow);
+}
+void Chip8::SUBNVxVy(){
+    uint8_t x = getxRegister(opcode);
+    uint8_t y = getyRegister(opcode);
+    bool borrow = (registers[y] >= registers[x]) ? 1 : 0;
+    registers[x] = registers[y] - registers[x];
+    registers[0xF] = static_cast<uint8_t>(borrow);
+}
+void Chip8::SHRVx(){
+    uint8_t x = getxRegister(opcode);
+    bool lsb = registers[x] & 1;
+    registers[x] >>= 1;
+    registers[0xF] = static_cast<uint8_t>(lsb);
+}
+void Chip8::SHLVx(){
+    uint8_t x = getxRegister(opcode);
+    bool msb = registers[x] & 0x90;
+    registers[x] <<= 1;
+    registers[0xF] = static_cast<uint8_t>(msb);
+}
+void Chip8::SNEVxVy(){
+    if(registers[getxRegister(opcode)] != registers[getyRegister(opcode)])
+        PC+=2;
+}
+void Chip8::LDIaddr(){
+    I = opcode & 0x0FFF;
+}
+void Chip8::JPV0addr(){
+    PC = registers[0] + (opcode & 0x0FFF);
+}
+void Chip8::RNDVxByte(){
+    uint8_t rnd = randByte(randGen);
+    registers[getxRegister(opcode)] = rnd & (opcode & 0x00FF);
 }

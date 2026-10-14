@@ -67,6 +67,9 @@ class Chip8{
     void fetchInstruction(void);
     void nextInstruction(void);
 
+    uint8_t getxRegister(const uint16_t) const;
+    uint8_t getyRegister(const uint16_t) const;
+
     //instructions functions
     /*
     Clear the display.
@@ -133,7 +136,35 @@ class Chip8{
     void XORVxVy(void);     //8xy3
     void ADDVxVy(void);     //8xy4
     void SUBVxVy(void);     //8xy5
-    void SUBVxVy(void);     //8xy6
+    void SHRVx(void);       //8xy6
+    void SUBNVxVy(void);    //8xy7
+    void SHLVx(void);       //8xy8
+
+    /*
+    The values of Vx and Vy are compared, and if they are not equal, the
+    program counter is increased by 2.
+    */
+    void SNEVxVy(void);      //9xy0
+    void LDIaddr(void);      //Annn
+    /*
+    The program counter is set to nnn plus the value of V0.
+    */
+    void JPV0addr(void);     //Bnnn
+    /*
+    Set Vx = random byte AND kk.
+    */
+    void RNDVxByte(void);    //Cxkk
+
+    /*
+    Dxyn - DRW Vx, Vy, nibble
+    Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision. The interpreter reads n
+    bytes from memory, starting at the address stored in I. These bytes are then displayed as sprites on screen
+    at coordinates (Vx, Vy). Sprites are XOR’d onto the existing screen. If this causes any pixels to be erased,
+    VF is set to 1, otherwise it is set to 0. If the sprite is positioned so part of it is outside the coordinates of
+    the display, it wraps around to the opposite side of the screen.
+    */
+    void DRWVxVyN(void);    //Dxyn
+    
 
 public:
     void LoadROM(const char* fileName);
