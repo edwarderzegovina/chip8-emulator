@@ -44,13 +44,13 @@ class Chip8{
     };
 
 
-    std::array<uint8_t,4092> memmory{};
+    std::array<uint8_t,4096> memmory{};
     uint16_t I {0};
     uint16_t PC = {0x200};
     
     std::array<uint8_t, 16> registers{}; 
 
-    std::array<uint16_t,17> stack{};
+    std::array<uint16_t,16> stack{};
     uint8_t stackPointer {0};
     
     uint8_t delayTimer {0};
@@ -58,7 +58,7 @@ class Chip8{
 
     std::array<uint8_t,32 * 64> video{};
 
-    std::array<uint8_t,16> keys;
+    std::array<uint8_t,16> keys{};
 
     uint16_t opcode{};
 
@@ -164,12 +164,25 @@ class Chip8{
     the display, it wraps around to the opposite side of the screen.
     */
     void DRWVxVyN(void);    //Dxyn
+    void SKPVx(void);       //Ex9E
+    void SKNPVx(void);      //ExA1
+    void LDVxDT(void);      //Fx07
+    void LDVxK(void);       //Fx0A
+    void LDDTVx(void);      //Fx15
+    void LDSTVx(void);      //Fx18
+    void ADDIVx(void);      //Fx1E
+    void LDFVx(void);       //Fx29
+    void LDBVx(void);       //Fx33
+    void LDIVx(void);       //Fx55
+    void LDVxI(void);       //Fx65
     
 
 public:
     void LoadROM(const char* fileName);
     void testRead(void) const;
     Chip8(const size_t = 10);
-    const std::array<uint8_t,32*64> getVideoBuffer() const;
+    const std::array<uint8_t,32*64>& getVideoBuffer() const;
+    void setKey(const uint8_t, const bool);
+    void updateTimers(void);
     void fetchCycle(void);
 };
